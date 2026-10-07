@@ -1,7 +1,58 @@
-@GameBackend.api_HostAddress = http://localhost:5165
+@host = http://localhost:5165
 
-GET {{GameBackend.api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Check Healthy
+GET {{host}}/health
 
-###
-GET http://localhost:5165/health
+### Register
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "tester",
+  "email": "test@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("access", response.body.accessToken);
+    client.global.set("refresh", response.body.refreshToken);
+%}
+
+### Login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Password123"
+}
+
+> {%
+    client.global.set("access", response.body.accessToken);
+    client.global.set("refresh", response.body.refreshToken);
+%}
+
+### Who is
+GET {{host}}/api/players/me
+Authorization: Bearer {{access}}
+
+### Token Update
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh}}"
+}
+
+> {%
+    client.global.set("access", response.body.accessToken);
+    client.global.set("refresh", response.body.refreshToken);
+%}
+
+### Logout
+POST {{host}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh}}"
+}

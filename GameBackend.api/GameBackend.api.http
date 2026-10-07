@@ -4,3 +4,4 @@ GET {{GameBackend.api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+GET http://localhost:5165/health

@@ -1,10 +1,9 @@
-﻿using System.Security.Claims;
+﻿using GameBackend.Api.Extensions;
 using GameBackend.Application.Players;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace GameBackend.api.Controllers;
+namespace GameBackend.Api.Controllers;
 
 [ApiController]
 [Route("api/players")]
@@ -13,8 +12,9 @@ public class PlayersController(PlayerService playerService) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<ActionResult<PlayerResponse>> Me(CancellationToken ct)
-    {
-        var playerId = Guid.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-        return Ok(await playerService.GetAsync(playerId, ct));
-    }
+        => Ok(await playerService.GetAsync(User.GetPlayerId(), ct));
+
+    [HttpPut("me")]
+    public async Task<ActionResult<PlayerResponse>> UpdateMe(UpdateProfileRequest request, CancellationToken ct)
+        => Ok(await playerService.UpdateAsync(User.GetPlayerId(), request, ct));
 }

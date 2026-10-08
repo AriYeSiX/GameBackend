@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Player> Players => Set<Player>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<SaveSlot> SaveSlots => Set<SaveSlot>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -13,5 +13,6 @@ public class PlayerConfiguration : IEntityTypeConfiguration<Player>
         builder.Property(p => p.Email).HasMaxLength(256).IsRequired();
         builder.HasIndex(p => p.Email).IsUnique();
         builder.HasIndex(p => p.Username).IsUnique();
+        builder.Property(p => p.AvatarUrl).HasMaxLength(512);
     } 
 }

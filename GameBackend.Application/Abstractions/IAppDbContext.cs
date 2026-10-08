@@ -8,4 +8,5 @@ public interface IAppDbContext
     DbSet<Player> Players { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    DbSet<SaveSlot> SaveSlots { get; } 
 }

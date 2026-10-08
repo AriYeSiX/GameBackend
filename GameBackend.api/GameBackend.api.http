@@ -56,3 +56,31 @@ Content-Type: application/json
 {
   "refreshToken": "{{refresh}}"
 }
+
+### Update profile
+PUT {{host}}/api/players/me
+Authorization: Bearer {{access}}
+Content-Type: application/json
+
+{
+  "username": "tester_renamed",
+  "avatarUrl": "https://example.com/avatar.png"
+}
+
+### Save slot 1
+PUT {{host}}/api/saves/1
+Authorization: Bearer {{access}}
+Content-Type: application/json
+
+{
+  "data": { "level": 5, "gold": 120, "inventory": ["sword", "potion"] },
+  "expectedVersion": 0
+}
+
+### Get slot 1
+GET {{host}}/api/saves/1
+Authorization: Bearer {{access}}
+
+### List slots
+GET {{host}}/api/saves
+Authorization: Bearer {{access}}

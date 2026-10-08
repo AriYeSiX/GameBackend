@@ -1,0 +1,14 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AApiDescriptionGroupCollection_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FUsers_003FAri_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fcf2e20862fab49c198d7a6d8dcf0a9cf21728_003F52_003F94344bd4_003FApiDescriptionGroupCollection_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AWebApplicationFactory_00601_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FUsers_003FAri_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F6e3b3371484d42219ad965226a5216da10528_003F4d_003F119288fd_003FWebApplicationFactory_00601_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=14d3e6d9_002Dd0af_002D444a_002D9b21_002D41181f454a35/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="AuthTests" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::D8F7070E-F98A-4ADF-B54C-7306B927F0CE::net10.0::GameBackend.Tests.AuthTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::D8F7070E-F98A-4ADF-B54C-7306B927F0CE::net10.0::GameBackend.Tests.SavesTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=a5cd5e3b_002D72aa_002D4c4e_002Db3f1_002D0a4a3aea2611/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Register_WithDuplicateEmail_Returns409" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::D8F7070E-F98A-4ADF-B54C-7306B927F0CE::net10.0::GameBackend.Tests.AuthTests.Register_WithDuplicateEmail_Returns409&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

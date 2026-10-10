@@ -1,4 +1,5 @@
 ﻿using GameBackend.Application.Common;
+using GameBackend.Domain;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace GameBackend.api.ErrorHandling;
@@ -16,6 +17,7 @@ public class GlobalExceptionHandler(
             UnauthorizedException => (StatusCodes.Status401Unauthorized, exception.Message),
             NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
             ValidationFailedException => (StatusCodes.Status400BadRequest, exception.Message),
+            DomainException => (StatusCodes.Status409Conflict, exception.Message),
             _ => (StatusCodes.Status500InternalServerError, "Внутренняя ошибка сервера")
         };
 

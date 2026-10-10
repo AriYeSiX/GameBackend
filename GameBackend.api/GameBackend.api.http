@@ -84,3 +84,20 @@ Authorization: Bearer {{access}}
 ### List slots
 GET {{host}}/api/saves
 Authorization: Bearer {{access}}
+
+
+### Submit score
+POST {{host}}/api/leaderboards/classic/scores
+Authorization: Bearer {{access}}
+Content-Type: application/json
+
+{
+  "score": 500000
+}
+
+### Top 10
+GET {{host}}/api/leaderboards/classic/top?count=10
+
+### My rank
+GET {{host}}/api/leaderboards/classic/me
+Authorization: Bearer {{access}}

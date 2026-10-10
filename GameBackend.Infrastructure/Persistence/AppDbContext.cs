@@ -9,7 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Player> Players => Set<Player>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SaveSlot> SaveSlots => Set<SaveSlot>();
-    
+    public DbSet<Leaderboard> Leaderboards => Set<Leaderboard>();
+    public DbSet<ScoreEntry> ScoreEntries => Set<ScoreEntry>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

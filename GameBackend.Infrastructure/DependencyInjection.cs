@@ -1,5 +1,7 @@
 ﻿using GameBackend.Application.Abstractions;
 using GameBackend.Infrastructure.Auth;
+using GameBackend.Infrastructure.Leaderboards;
+using GameBackend.Infrastructure.Lobbies;
 using GameBackend.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +26,15 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<ITokenService, TokenService>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        
+        var ranking = configuration["Leaderboards:Ranking"];
+
+        if (string.Equals(ranking, "Redis", StringComparison.OrdinalIgnoreCase))
+            services.AddScoped<ILeaderboardRanking, RedisLeaderboardRanking>();
+        else
+            services.AddScoped<ILeaderboardRanking, PostgresLeaderboardRanking>();
+        
+        services.AddSingleton<ILobbyStore, RedisLobbyStore>();
         
         return services;
     }

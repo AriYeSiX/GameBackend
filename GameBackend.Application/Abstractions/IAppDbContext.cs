@@ -9,4 +9,6 @@ public interface IAppDbContext
     DbSet<RefreshToken> RefreshTokens { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     DbSet<SaveSlot> SaveSlots { get; } 
+    DbSet<Leaderboard> Leaderboards { get; }
+    DbSet<ScoreEntry> ScoreEntries { get; }
 }

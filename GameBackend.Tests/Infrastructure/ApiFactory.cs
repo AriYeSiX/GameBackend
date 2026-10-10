@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using GameBackend.Application.Auth;
 using GameBackend.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
@@ -53,4 +55,14 @@ public class ApiFactory : WebApplicationFactory<Program>
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
         return (client, tokens);
     }
+    
+    public HubConnection CreateLobbyConnection(string accessToken) =>
+        new HubConnectionBuilder()
+            .WithUrl(new Uri(Server.BaseAddress, "/hubs/lobby"), options =>
+            {
+                options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
+                options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);
+                options.Transports = HttpTransportType.LongPolling;
+            })
+            .Build();
 }

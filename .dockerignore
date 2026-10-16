@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/*.user
+.git/
+.github/
+ClickerClient/
+GameBackend.Tests/
+publish/
+docs/
+**/appsettings.Development.json

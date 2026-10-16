@@ -7,8 +7,10 @@ using GameBackend.Application.Abstractions;
 using GameBackend.Application.Matches;
 using GameBackend.Infrastructure;
 using GameBackend.Infrastructure.Auth;
+using GameBackend.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -71,6 +73,14 @@ builder.Services.AddHealthChecks()
 
 
 var app = builder.Build();
+
+// In Docker the database starts empty, so apply migrations on startup.
+// EF Core takes a database lock while migrating, so several instances can start at once.
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
 
 app.UseExceptionHandler();
 

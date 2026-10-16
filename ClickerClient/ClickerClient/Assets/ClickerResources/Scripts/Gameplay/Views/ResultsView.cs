@@ -23,15 +23,19 @@ namespace GameClient.Gameplay.Views
 
         private void Awake()
         {
-            _playAgainButton.onClick.AddListener(() => PlayAgainClicked?.Invoke());
-            _backToLobbyButton.onClick.AddListener(() => BackToLobbyClicked?.Invoke());
+            _playAgainButton.onClick.AddListener(OnPlayAgainClicked);
+            _backToLobbyButton.onClick.AddListener(OnBackToLobbyClicked);
         }
 
         private void OnDestroy()
         {
-            _playAgainButton.onClick.RemoveAllListeners();
-            _backToLobbyButton.onClick.RemoveAllListeners();
+            _playAgainButton.onClick.RemoveListener(OnPlayAgainClicked);
+            _backToLobbyButton.onClick.RemoveListener(OnBackToLobbyClicked);
         }
+
+        private void OnPlayAgainClicked() => PlayAgainClicked?.Invoke();
+
+        private void OnBackToLobbyClicked() => BackToLobbyClicked?.Invoke();
 
         public void ShowResults(string title, IReadOnlyList<PlayerResultDto> results, Guid me)
         {

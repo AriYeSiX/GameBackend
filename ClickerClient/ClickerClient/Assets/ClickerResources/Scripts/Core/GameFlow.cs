@@ -54,7 +54,7 @@ namespace GameClient.Core
         }
 
         /// <summary>"To Lobby" button on the results screen.</summary>
-        public async void ReturnToLobby()
+        public async Task ReturnToLobbyAsync()
         {
             try
             {

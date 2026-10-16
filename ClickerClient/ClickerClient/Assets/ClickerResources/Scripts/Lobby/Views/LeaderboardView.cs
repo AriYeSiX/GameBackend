@@ -20,13 +20,15 @@ namespace GameClient.Lobby.Views
 
         private void Awake()
         {
-            _closeButton.onClick.AddListener(() => CloseClicked?.Invoke());
+            _closeButton.onClick.AddListener(OnCloseClicked);
         }
 
         private void OnDestroy()
         {
-            _closeButton.onClick.RemoveAllListeners();
+            _closeButton.onClick.RemoveListener(OnCloseClicked);
         }
+
+        private void OnCloseClicked() => CloseClicked?.Invoke();
 
         public void SetEntries(IReadOnlyList<LeaderboardEntry> entries, Guid me)
         {

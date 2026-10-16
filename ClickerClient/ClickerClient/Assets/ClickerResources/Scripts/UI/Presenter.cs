@@ -11,9 +11,14 @@ namespace GameClient.UI
     /// </summary>
     public abstract class Presenter : IDisposable
     {
-        private readonly CancellationTokenSource _lifetime = new();
+        private readonly CancellationTokenSource _lifetimeSource = new();
+        private readonly CancellationToken _lifetime;
+        private bool _disposed;
 
-        protected CancellationToken Lifetime => _lifetime.Token;
+        protected Presenter() => _lifetime = _lifetimeSource.Token;
+
+        // The token is cached: it stays usable after the source is disposed
+        protected CancellationToken Lifetime => _lifetime;
         protected bool IsAlive => !_lifetime.IsCancellationRequested;
 
         /// <summary>Runs an async operation from a button or event handler.</summary>
@@ -39,6 +44,14 @@ namespace GameClient.UI
             }
         }
 
-        public virtual void Dispose() => _lifetime.Cancel();
+        public virtual void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _lifetimeSource.Cancel();
+            _lifetimeSource.Dispose();
+        }
     }
 }

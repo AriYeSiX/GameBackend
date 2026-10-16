@@ -1,11 +1,12 @@
 ﻿using System.Text.Json;
 using GameBackend.Application.Abstractions;
 using GameBackend.Domain.Lobbies;
+using GameBackend.Infrastructure.Redis;
 using StackExchange.Redis;
 
 namespace GameBackend.Infrastructure.Lobbies;
 
-public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
+public class RedisLobbyStore(IConnectionMultiplexer redis, TimeProvider timeProvider) : ILobbyStore
 {
     private static readonly TimeSpan LobbyTtl = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
@@ -20,9 +21,7 @@ public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
     public async Task<Lobby?> GetAsync(Guid lobbyId, CancellationToken ct)
     {
         var json = await Db.StringGetAsync(LobbyKey(lobbyId));
-        return json.IsNullOrEmpty
-            ? null
-            : JsonSerializer.Deserialize<LobbyDocument>(json.ToString())!.ToDomain();
+        return json.IsNullOrEmpty ? null : Deserialize(json);
     }
 
     public async Task SaveAsync(Lobby lobby, CancellationToken ct)
@@ -41,17 +40,26 @@ public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
     public async Task<IReadOnlyList<Lobby>> ListAsync(CancellationToken ct)
     {
         var ids = await Db.SetMembersAsync(LobbyIndexKey);
+        if (ids.Length == 0)
+            return [];
+
+        // One MGET for all lobbies instead of a round trip per lobby
+        var keys = ids.Select(id => LobbyKey(Guid.Parse(id.ToString()))).ToArray();
+        var values = await Db.StringGetAsync(keys);
+
         var result = new List<Lobby>(ids.Length);
+        var expired = new List<RedisValue>();
 
-        foreach (var id in ids)
+        for (var i = 0; i < ids.Length; i++)
         {
-            var lobby = await GetAsync(Guid.Parse(id.ToString()), ct);
-
-            if (lobby is null)
-                await Db.SetRemoveAsync(LobbyIndexKey, id); // the lobby expired via TTL, so clean up the index
+            if (values[i].IsNullOrEmpty)
+                expired.Add(ids[i]); // the lobby expired via TTL, so clean up the index
             else
-                result.Add(lobby);
+                result.Add(Deserialize(values[i]));
         }
+
+        if (expired.Count > 0)
+            await Db.SetRemoveAsync(LobbyIndexKey, expired.ToArray());
 
         return result;
     }
@@ -67,25 +75,9 @@ public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
             ? Db.KeyDeleteAsync(PlayerKey(playerId))
             : Db.StringSetAsync(PlayerKey(playerId), lobbyId.ToString(), LobbyTtl);
 
-    public async Task<IAsyncDisposable> LockAsync(Guid lobbyId, CancellationToken ct)
-    {
-        var key = LockKey(lobbyId);
-        var token = Guid.NewGuid().ToString();
-        var deadline = DateTime.UtcNow + LockTimeout;
+    public Task<IAsyncDisposable> LockAsync(Guid lobbyId, CancellationToken ct) =>
+        RedisDistributedLock.AcquireAsync(Db, LockKey(lobbyId), LockTimeout, timeProvider, ct);
 
-        while (!await Db.LockTakeAsync(key, token, LockTimeout))
-        {
-            if (DateTime.UtcNow > deadline)
-                throw new TimeoutException($"Failed to lock lobby {lobbyId}");
-
-            await Task.Delay(20, ct);
-        }
-
-        return new RedisLock(Db, key, token);
-    }
-
-    private sealed class RedisLock(IDatabase db, RedisKey key, RedisValue token) : IAsyncDisposable
-    {
-        public async ValueTask DisposeAsync() => await db.LockReleaseAsync(key, token);
-    }
+    private static Lobby Deserialize(RedisValue json) =>
+        JsonSerializer.Deserialize<LobbyDocument>(json.ToString())!.ToDomain();
 }

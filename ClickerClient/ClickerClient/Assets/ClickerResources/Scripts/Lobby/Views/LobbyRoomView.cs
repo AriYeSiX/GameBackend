@@ -25,15 +25,19 @@ namespace GameClient.Lobby.Views
 
         private void Awake()
         {
-            _readyButton.onClick.AddListener(() => ReadyClicked?.Invoke());
-            _leaveButton.onClick.AddListener(() => LeaveClicked?.Invoke());
+            _readyButton.onClick.AddListener(OnReadyClicked);
+            _leaveButton.onClick.AddListener(OnLeaveClicked);
         }
 
         private void OnDestroy()
         {
-            _readyButton.onClick.RemoveAllListeners();
-            _leaveButton.onClick.RemoveAllListeners();
+            _readyButton.onClick.RemoveListener(OnReadyClicked);
+            _leaveButton.onClick.RemoveListener(OnLeaveClicked);
         }
+
+        private void OnReadyClicked() => ReadyClicked?.Invoke();
+
+        private void OnLeaveClicked() => LeaveClicked?.Invoke();
 
         public void Render(LobbyDto lobby, Guid me)
         {

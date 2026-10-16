@@ -28,13 +28,43 @@ namespace GameClient.Gameplay.Views
             _root.blocksRaycasts = visible;
         }
 
+        // Called every frame: update the text only when the shown value changes,
+        // and use TMP SetText with arguments to avoid string allocations
+        private string _countdownLabel = string.Empty;
+        private int _countdownNumber = -1;
+        private int _timeLeftTenths = -1;
+
         public void SetCountdown(string text)
         {
+            if (_countdownNumber < 0 && text == _countdownLabel)
+                return;
+
+            _countdownNumber = -1;
+            _countdownLabel = text;
             _countdownText.gameObject.SetActive(!string.IsNullOrEmpty(text));
             _countdownText.text = text;
         }
 
-        public void SetTimeLeft(float seconds) => _timerText.text = seconds.ToString("0.0");
+        public void SetCountdown(int seconds)
+        {
+            if (seconds == _countdownNumber)
+                return;
+
+            _countdownNumber = seconds;
+            _countdownLabel = null;
+            _countdownText.gameObject.SetActive(true);
+            _countdownText.SetText("{0:0}", seconds);
+        }
+
+        public void SetTimeLeft(float seconds)
+        {
+            var tenths = Mathf.CeilToInt(seconds * 10f);
+            if (tenths == _timeLeftTenths)
+                return;
+
+            _timeLeftTenths = tenths;
+            _timerText.SetText("{0:1}", tenths / 10f);
+        }
 
         public void SetMessage(string text) => _messageText.text = text ?? string.Empty;
 

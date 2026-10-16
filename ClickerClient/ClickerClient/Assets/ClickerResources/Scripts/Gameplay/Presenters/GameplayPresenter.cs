@@ -66,7 +66,7 @@ namespace GameClient.Gameplay.Presenters
             if (now < _match.CountdownEndsAt)
             {
                 _phase = Phase.Countdown;
-                _view.SetCountdown(Math.Ceiling(_match.CountdownEndsAt - now).ToString("0"));
+                _view.SetCountdown((int)Math.Ceiling(_match.CountdownEndsAt - now));
                 _view.SetTimeLeft(_match.StartInfo.DurationMs / 1000f);
                 return;
             }

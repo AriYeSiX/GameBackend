@@ -31,7 +31,18 @@ public class AuthService(
 
         db.Players.Add(player);
         var response = IssueTokens(player);
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Two registrations with the same email or username at the same moment:
+            // both passed the check above, the unique index rejected the second one
+            throw new ConflictException("A player with this email or nickname already exists");
+        }
+
         return response;
     }
 

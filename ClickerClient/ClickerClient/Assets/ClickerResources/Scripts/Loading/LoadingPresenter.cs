@@ -22,10 +22,24 @@ namespace GameClient.Loading
 
         public void Start() => _view.SetPlayers(_match.Players);
 
+        // Prebuilt strings: Tick runs every frame and should not allocate
+        private static readonly string[] StatusTexts =
+        {
+            "Waiting for other players.",
+            "Waiting for other players..",
+            "Waiting for other players..."
+        };
+
+        private int _shownStatus = -1;
+
         public void Tick()
         {
-            var dots = new string('.', 1 + (int)(Time.unscaledTime * 2) % 3);
-            _view.SetStatus($"Waiting for other players{dots}");
+            var status = (int)(Time.unscaledTime * 2) % StatusTexts.Length;
+            if (status == _shownStatus)
+                return;
+
+            _shownStatus = status;
+            _view.SetStatus(StatusTexts[status]);
         }
     }
 }

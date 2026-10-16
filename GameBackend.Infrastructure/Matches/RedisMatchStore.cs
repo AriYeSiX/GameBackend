@@ -1,11 +1,12 @@
 using System.Text.Json;
 using GameBackend.Application.Abstractions;
 using GameBackend.Domain.Matches;
+using GameBackend.Infrastructure.Redis;
 using StackExchange.Redis;
 
 namespace GameBackend.Infrastructure.Matches;
 
-public class RedisMatchStore(IConnectionMultiplexer redis) : IMatchStore
+public class RedisMatchStore(IConnectionMultiplexer redis, TimeProvider timeProvider) : IMatchStore
 {
     private static readonly TimeSpan MatchTtl = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(5);
@@ -49,22 +50,8 @@ public class RedisMatchStore(IConnectionMultiplexer redis) : IMatchStore
         await Db.SortedSetRemoveAsync(DeadlinesKey, matchId.ToString());
     }
 
-    public async Task<IAsyncDisposable> LockAsync(Guid matchId, CancellationToken ct)
-    {
-        var key = LockKey(matchId);
-        var token = Guid.NewGuid().ToString();
-        var deadline = DateTime.UtcNow + LockTimeout;
-
-        while (!await Db.LockTakeAsync(key, token, LockTimeout))
-        {
-            if (DateTime.UtcNow > deadline)
-                throw new TimeoutException($"Failed to lock match {matchId}");
-
-            await Task.Delay(10, ct);
-        }
-
-        return new RedisLock(Db, key, token);
-    }
+    public Task<IAsyncDisposable> LockAsync(Guid matchId, CancellationToken ct) =>
+        RedisDistributedLock.AcquireAsync(Db, LockKey(matchId), LockTimeout, timeProvider, ct);
 
     public async Task<Guid?> GetPlayerMatchAsync(Guid playerId, CancellationToken ct)
     {
@@ -103,10 +90,5 @@ public class RedisMatchStore(IConnectionMultiplexer redis) : IMatchStore
     {
         var due = await Db.SortedSetRangeByScoreAsync(DeadlinesKey, double.NegativeInfinity, now.Ticks);
         return due.Select(v => Guid.Parse(v.ToString())).ToList();
-    }
-
-    private sealed class RedisLock(IDatabase db, RedisKey key, RedisValue token) : IAsyncDisposable
-    {
-        public async ValueTask DisposeAsync() => await db.LockReleaseAsync(key, token);
     }
 }

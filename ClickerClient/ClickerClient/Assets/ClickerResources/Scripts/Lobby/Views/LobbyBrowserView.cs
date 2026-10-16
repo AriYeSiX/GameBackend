@@ -34,17 +34,16 @@ namespace GameClient.Lobby.Views
 
         private void Awake()
         {
-            _createButton.onClick.AddListener(() =>
-                CreateRequested?.Invoke(_lobbyNameInput.text.Trim(), _maxPlayersInput.text.Trim()));
-            _refreshButton.onClick.AddListener(() => RefreshRequested?.Invoke());
-            _leaderboardButton.onClick.AddListener(() => LeaderboardRequested?.Invoke());
+            _createButton.onClick.AddListener(OnCreateClicked);
+            _refreshButton.onClick.AddListener(OnRefreshClicked);
+            _leaderboardButton.onClick.AddListener(OnLeaderboardClicked);
         }
 
         private void OnDestroy()
         {
-            _createButton.onClick.RemoveAllListeners();
-            _refreshButton.onClick.RemoveAllListeners();
-            _leaderboardButton.onClick.RemoveAllListeners();
+            _createButton.onClick.RemoveListener(OnCreateClicked);
+            _refreshButton.onClick.RemoveListener(OnRefreshClicked);
+            _leaderboardButton.onClick.RemoveListener(OnLeaderboardClicked);
         }
 
         public void SetPlayerName(string username) => _playerNameText.text = username;
@@ -55,10 +54,19 @@ namespace GameClient.Lobby.Views
 
         public void SetLobbies(IReadOnlyList<LobbyDto> lobbies)
         {
-            UiList.Rebuild(_listRoot, _itemPrefab, lobbies,
-                (item, lobby) => item.Bind(lobby, id => JoinRequested?.Invoke(id)));
-
+            UiList.Rebuild(_listRoot, _itemPrefab, lobbies, BindItem);
             _emptyListLabel.SetActive(lobbies.Count == 0);
         }
+
+        private void BindItem(LobbyListItemView item, LobbyDto lobby) => item.Bind(lobby, OnJoinClicked);
+
+        private void OnCreateClicked() =>
+            CreateRequested?.Invoke(_lobbyNameInput.text.Trim(), _maxPlayersInput.text.Trim());
+
+        private void OnRefreshClicked() => RefreshRequested?.Invoke();
+
+        private void OnLeaderboardClicked() => LeaderboardRequested?.Invoke();
+
+        private void OnJoinClicked(Guid lobbyId) => JoinRequested?.Invoke(lobbyId);
     }
 }

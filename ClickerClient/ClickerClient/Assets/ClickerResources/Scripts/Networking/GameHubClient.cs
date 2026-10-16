@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace GameClient.Networking
     public sealed class GameHubClient : IDisposable
     {
         private readonly HubConnection _connection;
+        private readonly List<IDisposable> _handlers = new();
 
         public event Action<LobbyDto> LobbyUpdated;
         public event Action<MatchStartingDto> MatchStarting;
@@ -28,19 +30,15 @@ namespace GameClient.Networking
                     options.AccessTokenProvider = api.GetFreshAccessTokenAsync)
                 .Build();
 
-            Subscribe<LobbyDto>("LobbyUpdated", x => LobbyUpdated?.Invoke(x));
-            Subscribe<MatchStartingDto>("MatchStarting", x => MatchStarting?.Invoke(x));
-            Subscribe<MatchStartedDto>("MatchStarted", x => MatchStarted?.Invoke(x));
-            Subscribe<ScoreChangedDto>("ScoreChanged", x => ScoreChanged?.Invoke(x));
-            Subscribe<MatchFinishedDto>("MatchFinished", x => MatchFinished?.Invoke(x));
-            Subscribe<RematchStatusDto>("RematchStatus", x => RematchStatus?.Invoke(x));
-            Subscribe<MatchClosedDto>("MatchClosed", x => MatchClosed?.Invoke(x));
+            Subscribe<LobbyDto>("LobbyUpdated", RaiseLobbyUpdated);
+            Subscribe<MatchStartingDto>("MatchStarting", RaiseMatchStarting);
+            Subscribe<MatchStartedDto>("MatchStarted", RaiseMatchStarted);
+            Subscribe<ScoreChangedDto>("ScoreChanged", RaiseScoreChanged);
+            Subscribe<MatchFinishedDto>("MatchFinished", RaiseMatchFinished);
+            Subscribe<RematchStatusDto>("RematchStatus", RaiseRematchStatus);
+            Subscribe<MatchClosedDto>("MatchClosed", RaiseMatchClosed);
 
-            _connection.Closed += async _ =>
-            {
-                await Awaitable.MainThreadAsync();
-                ConnectionLost?.Invoke();
-            };
+            _connection.Closed += OnConnectionClosed;
         }
 
         public bool IsConnected => _connection.State == HubConnectionState.Connected;
@@ -80,14 +78,45 @@ namespace GameClient.Networking
         public Task LeaveMatchAsync() =>
             _connection.InvokeAsync("LeaveMatch");
 
-        public void Dispose() => _ = _connection.DisposeAsync();
+        public void Dispose()
+        {
+            // Unsubscribe first: disposing the connection raises Closed, and nobody should react to it on shutdown
+            _connection.Closed -= OnConnectionClosed;
 
-        // SignalR calls handlers off the main thread, so switch to it before touching Unity
+            foreach (var handler in _handlers)
+                handler.Dispose();
+
+            _handlers.Clear();
+            _ = _connection.DisposeAsync();
+        }
+
+        // SignalR calls handlers off the main thread, so switch to it before touching Unity.
+        // On() returns a subscription handle; we keep it to remove the handler in Dispose.
         private void Subscribe<T>(string method, Action<T> raise) =>
-            _connection.On<T>(method, async payload =>
+            _handlers.Add(_connection.On<T>(method, async payload =>
             {
                 await Awaitable.MainThreadAsync();
                 raise(payload);
-            });
+            }));
+
+        private async Task OnConnectionClosed(Exception error)
+        {
+            await Awaitable.MainThreadAsync();
+            ConnectionLost?.Invoke();
+        }
+
+        private void RaiseLobbyUpdated(LobbyDto payload) => LobbyUpdated?.Invoke(payload);
+
+        private void RaiseMatchStarting(MatchStartingDto payload) => MatchStarting?.Invoke(payload);
+
+        private void RaiseMatchStarted(MatchStartedDto payload) => MatchStarted?.Invoke(payload);
+
+        private void RaiseScoreChanged(ScoreChangedDto payload) => ScoreChanged?.Invoke(payload);
+
+        private void RaiseMatchFinished(MatchFinishedDto payload) => MatchFinished?.Invoke(payload);
+
+        private void RaiseRematchStatus(RematchStatusDto payload) => RematchStatus?.Invoke(payload);
+
+        private void RaiseMatchClosed(MatchClosedDto payload) => MatchClosed?.Invoke(payload);
     }
 }

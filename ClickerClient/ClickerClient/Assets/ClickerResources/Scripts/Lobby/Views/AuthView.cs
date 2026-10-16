@@ -20,17 +20,14 @@ namespace GameClient.Lobby.Views
 
         private void Awake()
         {
-            _loginButton.onClick.AddListener(() =>
-                LoginRequested?.Invoke(_emailInput.text.Trim(), _passwordInput.text));
-
-            _registerButton.onClick.AddListener(() =>
-                RegisterRequested?.Invoke(_usernameInput.text.Trim(), _emailInput.text.Trim(), _passwordInput.text));
+            _loginButton.onClick.AddListener(OnLoginClicked);
+            _registerButton.onClick.AddListener(OnRegisterClicked);
         }
 
         private void OnDestroy()
         {
-            _loginButton.onClick.RemoveAllListeners();
-            _registerButton.onClick.RemoveAllListeners();
+            _loginButton.onClick.RemoveListener(OnLoginClicked);
+            _registerButton.onClick.RemoveListener(OnRegisterClicked);
         }
 
         public void SetBusy(bool busy)
@@ -40,5 +37,11 @@ namespace GameClient.Lobby.Views
         }
 
         public void ShowError(string message) => _errorText.text = message ?? string.Empty;
+
+        private void OnLoginClicked() =>
+            LoginRequested?.Invoke(_emailInput.text.Trim(), _passwordInput.text);
+
+        private void OnRegisterClicked() =>
+            RegisterRequested?.Invoke(_usernameInput.text.Trim(), _emailInput.text.Trim(), _passwordInput.text);
     }
 }

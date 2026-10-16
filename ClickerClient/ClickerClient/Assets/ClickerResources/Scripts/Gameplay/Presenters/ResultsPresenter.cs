@@ -102,7 +102,7 @@ namespace GameClient.Gameplay.Presenters
         {
             _view.SetPlayAgainInteractable(false);
             _view.SetBackInteractable(false);
-            _flow.ReturnToLobby();
+            Run(_flow.ReturnToLobbyAsync);
         }
     }
 }

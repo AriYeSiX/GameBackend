@@ -55,3 +55,12 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Published server builds
+publish/
+
+# Rider / ReSharper per-user settings
+*.DotSettings.user
+.idea/**/workspace.xml
+.idea/**/dataSources.xml
+.idea/**/dataSources.local.xml

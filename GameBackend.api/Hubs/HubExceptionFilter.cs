@@ -21,7 +21,7 @@ public class HubExceptionFilter(ILogger<HubExceptionFilter> logger) : IHubFilter
         catch (Exception ex) when (ex is not HubException)
         {
             logger.LogError(ex, "Hub method {Method} failed", invocationContext.HubMethodName);
-            throw new HubException("Внутренняя ошибка сервера");
+            throw new HubException("Internal server error");
         }
     }
 }

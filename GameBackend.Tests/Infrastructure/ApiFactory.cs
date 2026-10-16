@@ -1,10 +1,12 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using GameBackend.Application.Auth;
+using GameBackend.Application.Matches;
 using GameBackend.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,19 +17,30 @@ namespace GameBackend.Tests.Infrastructure;
 
 public class ApiFactory : WebApplicationFactory<Program>
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:17")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17")
         .Build();
 
-    private readonly RedisContainer _redis = new RedisBuilder()
-        .WithImage("redis:7-alpine")
+    private readonly RedisContainer _redis = new RedisBuilder("redis:7-alpine")
         .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Postgres", _postgres.GetConnectionString());
         builder.UseSetting("ConnectionStrings:Redis", _redis.GetConnectionString());
+
+        // Short timings, so that a full-match test takes seconds rather than a minute
+        builder.ConfigureTestServices(services => services.AddSingleton(TestMatchOptions));
     }
+
+    public static readonly MatchOptions TestMatchOptions = new()
+    {
+        LoadingTimeoutMs = 3_000,
+        CountdownMs = 200,
+        RoundMs = 1_000,
+        ClickGraceMs = 200,
+        RematchTimeoutMs = 3_000,
+        MinClickIntervalMs = 40
+    };
 
     public async Task StartAsync()
     {
@@ -56,9 +69,9 @@ public class ApiFactory : WebApplicationFactory<Program>
         return (client, tokens);
     }
     
-    public HubConnection CreateLobbyConnection(string accessToken) =>
+    public HubConnection CreateGameConnection(string accessToken) =>
         new HubConnectionBuilder()
-            .WithUrl(new Uri(Server.BaseAddress, "/hubs/lobby"), options =>
+            .WithUrl(new Uri(Server.BaseAddress, "/hubs/game"), options =>
             {
                 options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
                 options.AccessTokenProvider = () => Task.FromResult<string?>(accessToken);

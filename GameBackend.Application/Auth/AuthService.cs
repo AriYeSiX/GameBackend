@@ -18,7 +18,7 @@ public class AuthService(
         var email = NormalizeEmail(request.Email);
 
         if (await db.Players.AnyAsync(p => p.Email == email || p.Username == request.Username, ct))
-            throw new ConflictException("Игрок с таким email или ником уже существует");
+            throw new ConflictException("A player with this email or nickname already exists");
 
         var player = new Player
         {
@@ -41,7 +41,7 @@ public class AuthService(
         var player = await db.Players.FirstOrDefaultAsync(p => p.Email == email, ct);
 
         if (player is null || !passwordHasher.Verify(player.PasswordHash, request.Password))
-            throw new UnauthorizedException("Неверный email или пароль");
+            throw new UnauthorizedException("Incorrect email or password");
 
         var response = IssueTokens(player);
         await db.SaveChangesAsync(ct);
@@ -56,7 +56,7 @@ public class AuthService(
             .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
 
         if (stored is null || !stored.IsActive(Now))
-            throw new UnauthorizedException("Недействительный refresh-токен");
+            throw new UnauthorizedException("Invalid refresh token");
 
         stored.RevokedAt = Now;
         var response = IssueTokens(stored.Player);

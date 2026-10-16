@@ -30,7 +30,7 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
         var save = await db.SaveSlots
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.PlayerId == playerId && s.SlotNumber == slot, ct)
-            ?? throw new NotFoundException($"Слот {slot} пуст");
+            ?? throw new NotFoundException($"Slot {slot} is empty");
 
         return ToResponse(save);
     }
@@ -41,11 +41,11 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
         EnsureSlotInRange(slot);
 
         if (request.Data.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
-            throw new ValidationFailedException("Поле data обязательно");
+            throw new ValidationFailedException("The 'data' field is required");
 
         var raw = request.Data.GetRawText();
         if (Encoding.UTF8.GetByteCount(raw) > MaxDataBytes)
-            throw new ValidationFailedException($"Сохранение больше {MaxDataBytes / 1024} КБ");
+            throw new ValidationFailedException($"Save data exceeds {MaxDataBytes / 1024} KB");
 
         var save = await db.SaveSlots
             .FirstOrDefaultAsync(s => s.PlayerId == playerId && s.SlotNumber == slot, ct);
@@ -54,7 +54,7 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
 
         if (request.ExpectedVersion is { } expected && expected != currentVersion)
             throw new ConflictException(
-                $"Версия устарела: на сервере {currentVersion}, у клиента {expected}");
+                $"Version is outdated: server has {currentVersion}, client has {expected}");
 
         if (save is null)
         {
@@ -72,7 +72,7 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
         }
         catch (DbUpdateConcurrencyException)
         {
-            throw new ConflictException("Сохранение изменилось параллельно, повторите запрос");
+            throw new ConflictException("The save was modified concurrently, please retry the request");
         }
 
         return ToResponse(save);
@@ -84,7 +84,7 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
 
         var save = await db.SaveSlots
             .FirstOrDefaultAsync(s => s.PlayerId == playerId && s.SlotNumber == slot, ct)
-            ?? throw new NotFoundException($"Слот {slot} пуст");
+            ?? throw new NotFoundException($"Slot {slot} is empty");
 
         db.SaveSlots.Remove(save);
         await db.SaveChangesAsync(ct);
@@ -93,7 +93,7 @@ public class SaveService(IAppDbContext db, TimeProvider timeProvider)
     private static void EnsureSlotInRange(int slot)
     {
         if (slot is < 1 or > MaxSlots)
-            throw new ValidationFailedException($"Номер слота должен быть от 1 до {MaxSlots}");
+            throw new ValidationFailedException($"The slot number must be between 1 and {MaxSlots}");
     }
 
     private static SaveSlotResponse ToResponse(SaveSlot save) =>

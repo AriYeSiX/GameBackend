@@ -19,17 +19,17 @@ public class PlayerService(IAppDbContext db)
                    .Where(p => p.Id == playerId)
                    .Select(p => new PlayerResponse(p.Id, p.Username, p.Email, p.AvatarUrl, p.CreatedAt))
                    .FirstOrDefaultAsync(ct)
-               ?? throw new NotFoundException("Игрок не найден");
+               ?? throw new NotFoundException("Player not found");
     }
 
     public async Task<PlayerResponse> UpdateAsync(Guid playerId, UpdateProfileRequest request, CancellationToken ct)
     {
         var player = await db.Players.FirstOrDefaultAsync(p => p.Id == playerId, ct)
-                     ?? throw new NotFoundException("Игрок не найден");
+                     ?? throw new NotFoundException("Player not found");
 
         if (player.Username != request.Username &&
             await db.Players.AnyAsync(p => p.Username == request.Username, ct))
-            throw new ConflictException("Этот ник уже занят");
+            throw new ConflictException("This username is already taken");
 
         player.Username = request.Username;
         player.AvatarUrl = request.AvatarUrl;

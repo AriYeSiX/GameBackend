@@ -18,7 +18,7 @@ public class GlobalExceptionHandler(
             NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
             ValidationFailedException => (StatusCodes.Status400BadRequest, exception.Message),
             DomainException => (StatusCodes.Status409Conflict, exception.Message),
-            _ => (StatusCodes.Status500InternalServerError, "Внутренняя ошибка сервера")
+            _ => (StatusCodes.Status500InternalServerError, "Internal server error")
         };
 
         if (status == StatusCodes.Status500InternalServerError)

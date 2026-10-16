@@ -48,7 +48,7 @@ public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
             var lobby = await GetAsync(Guid.Parse(id.ToString()), ct);
 
             if (lobby is null)
-                await Db.SetRemoveAsync(LobbyIndexKey, id); // лобби истекло по TTL — чистим индекс
+                await Db.SetRemoveAsync(LobbyIndexKey, id); // the lobby expired via TTL, so clean up the index
             else
                 result.Add(lobby);
         }
@@ -76,7 +76,7 @@ public class RedisLobbyStore(IConnectionMultiplexer redis) : ILobbyStore
         while (!await Db.LockTakeAsync(key, token, LockTimeout))
         {
             if (DateTime.UtcNow > deadline)
-                throw new TimeoutException($"Не удалось заблокировать лобби {lobbyId}");
+                throw new TimeoutException($"Failed to lock lobby {lobbyId}");
 
             await Task.Delay(20, ct);
         }

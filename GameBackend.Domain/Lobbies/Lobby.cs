@@ -48,10 +48,10 @@ public class Lobby
         name = name.Trim();
 
         if (name.Length is < 3 or > 40)
-            throw new DomainException("Название лобби должно быть от 3 до 40 символов");
+            throw new DomainException("The lobby name must be between 3 and 40 characters long");
 
         if (maxPlayers is < MinPlayers or > MaxPlayersLimit)
-            throw new DomainException($"Игроков в лобби может быть от {MinPlayers} до {MaxPlayersLimit}");
+            throw new DomainException($"A lobby must have between {MinPlayers} and {MaxPlayersLimit} players");
 
         return new Lobby(Guid.NewGuid(), name, hostId, maxPlayers,
             LobbyState.Waiting, now, [new LobbyMember(hostId, hostName)]);
@@ -64,13 +64,13 @@ public class Lobby
     public void Join(Guid playerId, string username)
     {
         if (State != LobbyState.Waiting)
-            throw new DomainException("Матч в этом лобби уже начинается");
+            throw new DomainException("The match in this lobby is already starting");
 
         if (_members.Any(m => m.PlayerId == playerId))
             return;
 
         if (IsFull)
-            throw new DomainException("Лобби заполнено");
+            throw new DomainException("The lobby is full");
 
         _members.Add(new LobbyMember(playerId, username));
     }
@@ -83,14 +83,14 @@ public class Lobby
             HostId = _members[0].PlayerId;
     }
 
-    /// <returns>true, если все готовы и матч должен стартовать</returns>
+    /// <returns>true, if everyone is ready and the match should start</returns>
     public bool SetReady(Guid playerId, bool isReady)
     {
         if (State != LobbyState.Waiting)
-            throw new DomainException("Матч уже начинается");
+            throw new DomainException("The match is already starting");
 
         var member = _members.FirstOrDefault(m => m.PlayerId == playerId)
-                     ?? throw new DomainException("Вы не состоите в этом лобби");
+                     ?? throw new DomainException("You are not part of this lobby");
 
         member.IsReady = isReady;
 

@@ -1,7 +1,8 @@
-﻿using GameBackend.Application.Abstractions;
+using GameBackend.Application.Abstractions;
 using GameBackend.Infrastructure.Auth;
 using GameBackend.Infrastructure.Leaderboards;
 using GameBackend.Infrastructure.Lobbies;
+using GameBackend.Infrastructure.Matches;
 using GameBackend.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +36,7 @@ public static class DependencyInjection
             services.AddScoped<ILeaderboardRanking, PostgresLeaderboardRanking>();
         
         services.AddSingleton<ILobbyStore, RedisLobbyStore>();
+        services.AddSingleton<IMatchStore, RedisMatchStore>();
         
         return services;
     }

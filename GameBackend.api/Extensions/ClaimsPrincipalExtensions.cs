@@ -8,5 +8,5 @@ public static class ClaimsPrincipalExtensions
 {
     public static Guid GetPlayerId(this ClaimsPrincipal user) =>
         Guid.Parse(user.FindFirstValue(JwtRegisteredClaimNames.Sub)
-                   ?? throw new UnauthorizedException("В токене нет идентификатора игрока"));
+                   ?? throw new UnauthorizedException("The token does not contain a player ID"));
 }

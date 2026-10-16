@@ -1,4 +1,5 @@
-﻿using GameBackend.Domain.Lobbies;
+using GameBackend.Application.Matches;
+using GameBackend.Domain.Lobbies;
 
 namespace GameBackend.Application.Lobbies;
 
@@ -6,8 +7,6 @@ public record LobbyMemberDto(Guid PlayerId, string Username, bool IsReady);
 
 public record LobbyDto(
     Guid Id, string Name, Guid HostId, int MaxPlayers, string State, IReadOnlyList<LobbyMemberDto> Members);
-
-public record MatchStartingDto(Guid LobbyId, Guid MatchId, IReadOnlyList<Guid> PlayerIds);
 
 public record LeaveResult(Guid LobbyId, LobbyDto? Lobby);
 

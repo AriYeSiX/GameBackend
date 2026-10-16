@@ -1,17 +1,24 @@
-﻿using GameBackend.Application.Abstractions;
+using GameBackend.Application.Abstractions;
 using GameBackend.Application.Common;
+using GameBackend.Application.Matches;
 using GameBackend.Application.Players;
 using GameBackend.Domain;
 using GameBackend.Domain.Lobbies;
 
 namespace GameBackend.Application.Lobbies;
 
-public class LobbyService(ILobbyStore store, PlayerService playerService, TimeProvider timeProvider)
+public class LobbyService(
+    ILobbyStore store,
+    PlayerService playerService,
+    MatchService matchService,
+    TimeProvider timeProvider)
 {
     public async Task<LobbyDto> CreateAsync(Guid playerId, string name, int maxPlayers, CancellationToken ct)
     {
+        await matchService.LeaveAsync(playerId, ct); // the player came back to the lobby from a match, so leave the match
+
         if (await GetActiveLobbyIdAsync(playerId, ct) is not null)
-            throw new DomainException("Сначала покиньте текущее лобби");
+            throw new DomainException("Leave your current lobby first");
 
         var player = await playerService.GetAsync(playerId, ct);
         var lobby = Lobby.Create(name, maxPlayers, playerId, player.Username, timeProvider.GetUtcNow().UtcDateTime);
@@ -23,16 +30,18 @@ public class LobbyService(ILobbyStore store, PlayerService playerService, TimePr
 
     public async Task<LobbyDto> JoinAsync(Guid playerId, Guid lobbyId, CancellationToken ct)
     {
+        await matchService.LeaveAsync(playerId, ct);
+
         var currentLobbyId = await GetActiveLobbyIdAsync(playerId, ct);
         if (currentLobbyId is not null && currentLobbyId != lobbyId)
-            throw new DomainException("Сначала покиньте текущее лобби");
+            throw new DomainException("Leave your current lobby first");
 
         var player = await playerService.GetAsync(playerId, ct);
 
         await using var lobbyLock = await store.LockAsync(lobbyId, ct);
 
         var lobby = await store.GetAsync(lobbyId, ct)
-                    ?? throw new NotFoundException("Лобби не найдено");
+                    ?? throw new NotFoundException("Lobby not found");
 
         lobby.Join(playerId, player.Username);
 
@@ -69,12 +78,12 @@ public class LobbyService(ILobbyStore store, PlayerService playerService, TimePr
     public async Task<ReadyResult> SetReadyAsync(Guid playerId, bool isReady, CancellationToken ct)
     {
         var lobbyId = await GetActiveLobbyIdAsync(playerId, ct)
-                      ?? throw new DomainException("Вы не состоите в лобби");
+                      ?? throw new DomainException("You are not in a lobby");
 
         await using var lobbyLock = await store.LockAsync(lobbyId, ct);
 
         var lobby = await store.GetAsync(lobbyId, ct)
-                    ?? throw new NotFoundException("Лобби не найдено");
+                    ?? throw new NotFoundException("Lobby not found");
 
         if (!lobby.SetReady(playerId, isReady))
         {
@@ -82,11 +91,13 @@ public class LobbyService(ILobbyStore store, PlayerService playerService, TimePr
             return new ReadyResult(lobby.ToDto(), null);
         }
 
-        var match = new MatchStartingDto(lobby.Id, Guid.NewGuid(), lobby.Members.Select(m => m.PlayerId).ToList());
-
         await store.DeleteAsync(lobby.Id, ct);
         foreach (var member in lobby.Members)
             await store.SetPlayerLobbyAsync(member.PlayerId, null, ct);
+
+        // The lobby has done its job: from this point on, the match takes control of the players.
+        var match = await matchService.CreateAsync(
+            lobby.Members.Select(m => (m.PlayerId, m.Username)).ToList(), ct);
 
         return new ReadyResult(lobby.ToDto(), match);
     }
@@ -102,7 +113,8 @@ public class LobbyService(ILobbyStore store, PlayerService playerService, TimePr
             .ToList();
     }
 
-    // Привязка игрока к лобби могла пережить само лобби (истёк TTL) — тогда сбрасываем её
+    // A player's association with a lobby could persist even after the lobby itself ceased to exist
+    // (i.e., its TTL expired) — in such cases, we clear that association.
     private async Task<Guid?> GetActiveLobbyIdAsync(Guid playerId, CancellationToken ct)
     {
         var lobbyId = await store.GetPlayerLobbyAsync(playerId, ct);

@@ -39,7 +39,7 @@ public class LeaderboardService(IAppDbContext db, ILeaderboardRanking ranking, T
     public async Task<IReadOnlyList<LeaderboardEntry>> GetTopAsync(string key, int count, CancellationToken ct)
     {
         if (count is < 1 or > MaxTopCount)
-            throw new ValidationFailedException($"count должен быть от 1 до {MaxTopCount}");
+            throw new ValidationFailedException($"count must be between 1 and {MaxTopCount}");
 
         var board = await GetBoardAsync(key, ct);
         var top = await ranking.GetTopAsync(board.Id, count, ct);
@@ -72,7 +72,7 @@ public class LeaderboardService(IAppDbContext db, ILeaderboardRanking ranking, T
         var entry = await db.ScoreEntries
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.LeaderboardId == board.Id && e.PlayerId == playerId, ct)
-            ?? throw new NotFoundException("У игрока нет результата в этой таблице");
+            ?? throw new NotFoundException("The player has no score on this leaderboard");
 
         var rank = await ranking.GetRankAsync(board.Id, entry.Score, ct);
         return new PlayerRankResponse(rank, entry.Score);
@@ -80,5 +80,5 @@ public class LeaderboardService(IAppDbContext db, ILeaderboardRanking ranking, T
 
     private async Task<Leaderboard> GetBoardAsync(string key, CancellationToken ct) =>
         await db.Leaderboards.AsNoTracking().FirstOrDefaultAsync(b => b.Key == key, ct)
-        ?? throw new NotFoundException($"Таблица '{key}' не найдена");
+        ?? throw new NotFoundException($"Leaderboard '{key}' not found");
 }

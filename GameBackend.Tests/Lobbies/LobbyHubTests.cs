@@ -1,4 +1,5 @@
-﻿using GameBackend.Application.Lobbies;
+using GameBackend.Application.Lobbies;
+using GameBackend.Application.Matches;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -12,7 +13,7 @@ public class LobbyHubTests
     private static async Task<HubConnection> ConnectNewPlayerAsync()
     {
         var (_, tokens) = await TestEnvironment.Factory.CreateAuthenticatedClientAsync();
-        var connection = TestEnvironment.Factory.CreateLobbyConnection(tokens.AccessToken);
+        var connection = TestEnvironment.Factory.CreateGameConnection(tokens.AccessToken);
         await connection.StartAsync();
         return connection;
     }
@@ -40,7 +41,7 @@ public class LobbyHubTests
         Assert.Multiple(() =>
         {
             Assert.That(hostResult.MatchId, Is.EqualTo(guestResult.MatchId));
-            Assert.That(hostResult.PlayerIds, Has.Count.EqualTo(2));
+            Assert.That(hostResult.Players, Has.Count.EqualTo(2));
         });
     }
 
@@ -56,7 +57,7 @@ public class LobbyHubTests
 
         var ex = Assert.ThrowsAsync<HubException>(() => extra.InvokeAsync<LobbyDto>("JoinLobby", lobby.Id));
 
-        Assert.That(ex!.Message, Does.Contain("заполнено"));
+        Assert.That(ex!.Message, Does.Contain("full"));
     }
 
     [Test]

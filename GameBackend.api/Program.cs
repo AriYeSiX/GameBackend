@@ -1,7 +1,10 @@
 using System.Text;
 using GameBackend.api.ErrorHandling;
 using GameBackend.Api.Hubs;
+using GameBackend.Api.Matches;
 using GameBackend.Application;
+using GameBackend.Application.Abstractions;
+using GameBackend.Application.Matches;
 using GameBackend.Infrastructure;
 using GameBackend.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +22,12 @@ builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+var matchOptions = builder.Configuration.GetSection(MatchOptions.SectionName).Get<MatchOptions>() ?? new MatchOptions();
+builder.Services.AddSingleton(matchOptions);
+builder.Services.AddSingleton<IUserIdProvider, PlayerIdUserIdProvider>();
+builder.Services.AddSingleton<IGameNotifier, SignalRGameNotifier>();
+builder.Services.AddHostedService<MatchDeadlineWorker>();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()!;
 
@@ -71,13 +80,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<LobbyHub>("/hubs/lobby");
+app.MapHub<GameHub>("/hubs/game");
 app.MapHealthChecks("/health");
 
 app.Run();

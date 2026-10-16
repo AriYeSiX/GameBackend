@@ -6,7 +6,7 @@ param(
 $url = "http://localhost:5165/api/leaderboards/classic/me"
 $headers = @{ Authorization = "Bearer $Token" }
 
-# Прогрев: первый запрос не считаем (в Redis-режиме он загружает таблицу)
+# Warm-up: the first request is not measured (in Redis mode it loads the leaderboard)
 Invoke-RestMethod $url -Headers $headers | Out-Null
 
 $times = 1..$Requests | ForEach-Object {
@@ -14,7 +14,7 @@ $times = 1..$Requests | ForEach-Object {
 }
 
 $sorted = $times | Sort-Object
-"Запросов: $Requests"
-"Среднее: {0:N2} мс" -f ($times | Measure-Object -Average).Average
-"Медиана: {0:N2} мс" -f $sorted[[int]($Requests * 0.5)]
-"p95:     {0:N2} мс" -f $sorted[[int]($Requests * 0.95) - 1]
+"Requests: $Requests"
+"Average: {0:N2} ms" -f ($times | Measure-Object -Average).Average
+"Median:  {0:N2} ms" -f $sorted[[int]($Requests * 0.5)]
+"p95:     {0:N2} ms" -f $sorted[[int]($Requests * 0.95) - 1]
